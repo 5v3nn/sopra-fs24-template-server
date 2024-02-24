@@ -46,11 +46,14 @@ public class UserControllerTest {
 
     @Test
     public void givenUsers_whenGetUsers_thenReturnJsonArray() throws Exception {
+        String token = "1";
+
         // given
         User user = new User();
         user.setName("Firstname Lastname");
         user.setUsername("firstname@lastname");
         user.setStatus(UserStatus.OFFLINE);
+        user.setToken(token);
 
         List<User> allUsers = Collections.singletonList(user);
 
@@ -59,7 +62,8 @@ public class UserControllerTest {
         given(userService.getUsers()).willReturn(allUsers);
 
         // when
-        MockHttpServletRequestBuilder getRequest = get("/users").contentType(MediaType.APPLICATION_JSON);
+        MockHttpServletRequestBuilder getRequest = get("/users").contentType(MediaType.APPLICATION_JSON).header("Authorization", token);
+        given(userService.isTokenInDB(Mockito.eq(token))).willReturn(true);  // valid token
 
         // then
         mockMvc.perform(getRequest).andExpect(status().isOk())

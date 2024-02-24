@@ -12,8 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.lang.model.type.NullType;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * User Controller
@@ -34,7 +36,12 @@ public class UserController {
     @GetMapping("/users")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public List<UserGetDTO> getAllUsers() {
+    public List<UserGetDTO> getAllUsers(@RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = "") String authToken) {
+        // if not authorized
+        if (!isAuthorized(authToken, Permissions.READ)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Forbidden action");
+        }
+
         // fetch all users in the internal representation
         List<User> users = userService.getUsers();
         List<UserGetDTO> userGetDTOs = new ArrayList<>();
@@ -65,7 +72,7 @@ public class UserController {
     @GetMapping("/users/{id}")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public UserGetDTO getUserWithId(@PathVariable Long id, @RequestHeader(HttpHeaders.AUTHORIZATION) String authToken) {
+    public UserGetDTO getUserWithId(@PathVariable Long id, @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = "") String authToken) {
         // if not authorized
         if (!isAuthorized(authToken, Permissions.READ)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Forbidden action");
@@ -106,14 +113,14 @@ public class UserController {
 //    }
 
     private boolean isAuthorized(String token, Permissions permissions) {
-        if (permissions == Permissions.READ) {
+        if (!Objects.equals(token, "") && permissions == Permissions.READ) {
             return userService.isTokenInDB(token);
         }
         return false;
     }
 
     private boolean isAuthorized(String token, Permissions permissions, Long userId) {
-        if (permissions == Permissions.READ_WRITE) {
+        if (!Objects.equals(token, "") && permissions == Permissions.READ_WRITE) {
             return userService.isTokenCorrespondingToUserId(token, userId);
         }
         return false;
