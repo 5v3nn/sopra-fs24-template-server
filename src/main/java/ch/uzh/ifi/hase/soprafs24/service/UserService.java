@@ -98,22 +98,23 @@ public class UserService {
 
     public boolean isTokenInDB(String userToken) {
 
-        User userOptional = this.userRepository.findByToken(userToken);
-
-        if (userOptional == null) {
+        try {
+            User userOptional = getUserByToken(userToken);
+            return true;
+        }
+        catch (NotFoundException e) {
             return false;
         }
-
-        return true;
     }
 
     public boolean isTokenCorrespondingToUserId(String userToken, Long userId) {
-        User userOptional = this.userRepository.findByToken(userToken);
-        if (userOptional == null) {
+        try {
+            User user = getUserByToken(userToken);
+            return Objects.equals(user.getId(), userId);
+        }
+        catch (NotFoundException e) {
             return false;
         }
-
-        return Objects.equals(userOptional.getId(), userId);
     }
 
     public User isUserAuthorized(String username, String password) {
@@ -125,5 +126,14 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Username or password are wrong");
         }
         return userUsername;
+    }
+
+    public User getUserByToken(String token) {
+        User user = this.userRepository.findByToken(token);
+
+        if (user != null) {
+            return user;
+        }
+        throw new NotFoundException("user token not found");
     }
 }

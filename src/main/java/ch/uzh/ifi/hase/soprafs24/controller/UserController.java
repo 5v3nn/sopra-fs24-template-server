@@ -100,10 +100,27 @@ public class UserController {
     public UserGetDTO authenticateUser(@RequestBody UserPostDTO userPostDTO) {
         // convert API user to internal representation
         User userInput = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
+        User getUser;
 
-        // create user
+        // userInput has either username, password
         // todo password
-        User getUser = userService.isUserAuthorized(userInput.getUsername(), userInput.getUsername());
+        if (!Objects.equals(userInput.getUsername(), "") /* userInput.getPassword() != "" */) {
+            getUser = userService.isUserAuthorized(userInput.getUsername(), userInput.getUsername());
+        }
+        // or user input has a token
+        else if (!Objects.equals(userInput.getToken(), "")) {
+            if (userService.isTokenInDB(userInput.getToken())) {
+                getUser = userService.getUserByToken(userInput.getToken());
+            }
+            else {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid token");
+            }
+        }
+        else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Either pass username,password or pass token.");
+        }
+
+        // return user object
         return DTOMapper.INSTANCE.convertEntityToUserGetDTO(getUser);
     }
 
