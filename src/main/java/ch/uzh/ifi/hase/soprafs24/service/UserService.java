@@ -115,4 +115,15 @@ public class UserService {
 
         return Objects.equals(userOptional.getId(), userId);
     }
+
+    public User isUserAuthorized(String username, String password) {
+        User userUsername = this.userRepository.findByUsername(username);
+        // todo find by password
+
+        // todo of if userPassword is null
+        if (userUsername == null /* || userPassword == null || userUsername.getUsername() != userPassword.getUsername() */) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Username or password are wrong");
+        }
+        return userUsername;
+    }
 }

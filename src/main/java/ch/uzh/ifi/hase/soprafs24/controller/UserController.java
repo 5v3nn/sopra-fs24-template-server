@@ -93,24 +93,19 @@ public class UserController {
         }
     }
 
-    /* returns token */
-//    @GetMapping("/users/auth/{userToken}")
-//    @ResponseStatus(HttpStatus.OK)
-//    public boolean isUserAuthenticated(@PathVariable String userToken) {
-//
-//        try {
-//            String token = userService.getUserToken(userToken);
-//            return true;
-//        }
-//        catch (NotFoundException e) {
-//            // user token is invalid
-////            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid user token");
-//            return false;
-//        }
-//        catch (Exception e) {
-//            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected Error", e);
-//        }
-//    }
+    /* Login, returns token */
+    @PostMapping("/users/auth")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public UserGetDTO authenticateUser(@RequestBody UserPostDTO userPostDTO) {
+        // convert API user to internal representation
+        User userInput = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
+
+        // create user
+        // todo password
+        User getUser = userService.isUserAuthorized(userInput.getUsername(), userInput.getUsername());
+        return DTOMapper.INSTANCE.convertEntityToUserGetDTO(getUser);
+    }
 
     private boolean isAuthorized(String token, Permissions permissions) {
         if (!Objects.equals(token, "") && permissions == Permissions.READ) {

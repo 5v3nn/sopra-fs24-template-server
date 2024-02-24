@@ -45,6 +45,34 @@ public class UserControllerTest {
     private UserService userService;
 
     @Test
+    public void authUser_success() throws Exception {
+        String token = "1";
+
+        // given
+        User user = new User();
+        user.setUsername("testUsername");
+        user.setToken(token);
+
+        given(userService.isUserAuthorized(Mockito.anyString(), Mockito.anyString())).willReturn(user);
+//        given(userService.isTokenInDB(Mockito.eq(token))).willReturn(true);  // valid token
+
+        UserPostDTO userPostDTO = new UserPostDTO();
+        // todo password
+        userPostDTO.setUsername("testUsername");
+
+
+        // when/then -> do the request + validate the result
+        MockHttpServletRequestBuilder postRequest = post("/users/auth")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(asJsonString(userPostDTO))
+                .header("Authorization", token);
+
+        mockMvc.perform(postRequest)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token", is(user.getToken())));
+    }
+
+    @Test
     public void givenUsers_whenGetUsers_thenReturnJsonArray() throws Exception {
         String token = "1";
 
@@ -62,7 +90,9 @@ public class UserControllerTest {
         given(userService.getUsers()).willReturn(allUsers);
 
         // when
-        MockHttpServletRequestBuilder getRequest = get("/users").contentType(MediaType.APPLICATION_JSON).header("Authorization", token);
+        MockHttpServletRequestBuilder getRequest = get("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", token);
         given(userService.isTokenInDB(Mockito.eq(token))).willReturn(true);  // valid token
 
         // then
