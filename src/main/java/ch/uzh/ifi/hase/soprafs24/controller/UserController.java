@@ -1,19 +1,19 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 
+import ch.uzh.ifi.hase.soprafs24.constant.Permissions;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.exceptions.NotFoundException;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * User Controller
@@ -50,6 +50,9 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     @ResponseBody
     public UserGetDTO createUser(@RequestBody UserPostDTO userPostDTO) {
+
+        // no auth needed to create user (this would actually be bad security design...)
+
         // convert API user to internal representation
         User userInput = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
 
@@ -62,7 +65,12 @@ public class UserController {
     @GetMapping("/users/{id}")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public UserGetDTO getUserWithId(@PathVariable long id) {
+    public UserGetDTO getUserWithId(@PathVariable Long id, @RequestHeader(HttpHeaders.AUTHORIZATION) String authToken) {
+        // if not authorized
+        if (!isAuthorized(authToken, Permissions.READ)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Forbidden action");
+        }
+
         try {
             // need to return UserGetDTO, just User does not work
             User user = userService.getUserById(id);
@@ -76,5 +84,38 @@ public class UserController {
             // unexpected error
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected Error", e);
         }
+    }
+
+    /* returns token */
+//    @GetMapping("/users/auth/{userToken}")
+//    @ResponseStatus(HttpStatus.OK)
+//    public boolean isUserAuthenticated(@PathVariable String userToken) {
+//
+//        try {
+//            String token = userService.getUserToken(userToken);
+//            return true;
+//        }
+//        catch (NotFoundException e) {
+//            // user token is invalid
+////            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid user token");
+//            return false;
+//        }
+//        catch (Exception e) {
+//            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected Error", e);
+//        }
+//    }
+
+    private boolean isAuthorized(String token, Permissions permissions) {
+        if (permissions == Permissions.READ) {
+            return userService.isTokenInDB(token);
+        }
+        return false;
+    }
+
+    private boolean isAuthorized(String token, Permissions permissions, Long userId) {
+        if (permissions == Permissions.READ_WRITE) {
+            return userService.isTokenCorrespondingToUserId(token, userId);
+        }
+        return false;
     }
 }
