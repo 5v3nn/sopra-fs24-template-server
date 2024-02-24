@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -93,5 +94,25 @@ public class UserService {
         else if (userByName != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format(baseErrorMessage, "name", "is"));
         }
+    }
+
+    public boolean isTokenInDB(String userToken) {
+
+        User userOptional = this.userRepository.findByToken(userToken);
+
+        if (userOptional == null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean isTokenCorrespondingToUserId(String userToken, Long userId) {
+        User userOptional = this.userRepository.findByToken(userToken);
+        if (userOptional == null) {
+            return false;
+        }
+
+        return Objects.equals(userOptional.getId(), userId);
     }
 }

@@ -110,4 +110,44 @@ public class UserServiceTest {
             userService.getUserById(userId);
         });
     }
+
+    @Test
+    public void isUserTokenInDB_success() {
+        String userToken = "token";
+        testUser.setToken(userToken);
+        Mockito.when(userRepository.findByToken(Mockito.eq(userToken))).thenReturn(testUser);
+
+        // call
+        assertTrue(userService.isTokenInDB(userToken));
+    }
+
+    @Test
+    public void isUserTokenInDB_failed() {
+        String userToken = "token";
+        testUser.setToken(userToken);
+        Mockito.when(userRepository.findByToken(Mockito.eq(userToken))).thenReturn(testUser);
+
+        assertFalse(userService.isTokenInDB("invalid-token"));
+    }
+
+
+    @Test
+    public void isUserTokenCorrespondingToId_success() {
+        String userToken = "token";
+        testUser.setToken(userToken); // id is 1L
+
+        Mockito.when(userRepository.findByToken(Mockito.eq(userToken))).thenReturn(testUser);
+
+        // call
+        assertTrue(userService.isTokenCorrespondingToUserId(userToken, 1L));
+    }
+
+    @Test
+    public void isUserTokenCorrespondingToId_failed() {
+        String userToken = "token";
+        testUser.setToken(userToken);
+        Mockito.when(userRepository.findByToken(Mockito.eq(userToken))).thenReturn(testUser);
+
+        assertFalse(userService.isTokenCorrespondingToUserId("invalid-token", 1L));
+    }
 }
