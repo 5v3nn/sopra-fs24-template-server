@@ -92,9 +92,10 @@ public class UserService {
         else if (userByUsername != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format(baseErrorMessage, "username", "is"));
         }
-        else if (userByName != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format(baseErrorMessage, "name", "is"));
-        }
+        // i want users to have the same name
+//        else if (userByName != null) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format(baseErrorMessage, "name", "is"));
+//        }
     }
 
     public boolean isTokenInDB(String userToken) {
