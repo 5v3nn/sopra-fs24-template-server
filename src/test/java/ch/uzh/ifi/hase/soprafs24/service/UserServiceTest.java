@@ -1,17 +1,22 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
+import ch.uzh.ifi.hase.soprafs24.constant.Permissions;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.exceptions.NotFoundException;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -149,5 +154,33 @@ public class UserServiceTest {
         Mockito.when(userRepository.findByToken(Mockito.eq(userToken))).thenReturn(testUser);
 
         assertFalse(userService.isTokenCorrespondingToUserId("invalid-token", 1L));
+    }
+
+    @Test
+    public void isAuthorized_readPermissions_valid_success() {
+        String inputToken = "1";
+        User mockedUser = new User();
+
+        Mockito.when(userRepository.findByToken(Mockito.eq(inputToken))).thenReturn(mockedUser);
+        boolean isAuth = userService.isAuthorized(inputToken, Permissions.READ);
+
+        assertTrue(isAuth);
+    }
+
+    @Test
+    public void isAuthorized_readPermissions_invalid() {
+        String inputToken = "1";
+
+        Mockito.when(userRepository.findByToken(Mockito.eq(inputToken))).thenReturn(null);
+        boolean isAuth = userService.isAuthorized(inputToken, Permissions.READ);
+
+        assertFalse(isAuth);
+    }
+
+
+    @Test
+    public void isAuthorized_readPermissions_invalidPermissions() {
+        boolean isAuth = userService.isAuthorized("1", Permissions.READ_WRITE);  // wrong permissions
+        assertFalse(isAuth);
     }
 }
