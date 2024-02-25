@@ -56,10 +56,9 @@ public class UserControllerTest {
         user.setToken(token);
 
         given(userService.isUserAuthorized(Mockito.anyString(), Mockito.anyString())).willReturn(user);
-//        given(userService.isTokenInDB(Mockito.eq(token))).willReturn(true);  // valid token
 
         UserPostDTO userPostDTO = new UserPostDTO();
-        // todo password
+        userPostDTO.setPassword("1234");
         userPostDTO.setUsername("testUsername");
 
 

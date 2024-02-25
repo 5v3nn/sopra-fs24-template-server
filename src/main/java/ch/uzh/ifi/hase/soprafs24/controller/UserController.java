@@ -102,10 +102,9 @@ public class UserController {
         User userInput = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
         User getUser;
 
-        // userInput has either username, password
-        // todo password
-        if (!Objects.equals(userInput.getUsername(), "") /* userInput.getPassword() != "" */) {
-            getUser = userService.isUserAuthorized(userInput.getUsername(), userInput.getUsername());
+        // userInput has both username, password not empty
+        if (!Objects.equals(userInput.getUsername(), "") && !Objects.equals(userInput.getPassword(), "")) {
+            getUser = userService.isUserAuthorized(userInput.getUsername(), userInput.getPassword());
         }
         // or user input has a token
         else if (!Objects.equals(userInput.getToken(), "")) {

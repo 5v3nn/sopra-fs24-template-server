@@ -183,4 +183,35 @@ public class UserServiceTest {
         boolean isAuth = userService.isAuthorized("1", Permissions.READ_WRITE);  // wrong permissions
         assertFalse(isAuth);
     }
+
+    @Test
+    public void isUserAuthorized_validUsernamePassword() {
+        User testUser = new User();
+        String username = "Admiral van Schneider";
+        String password = "MissSophie1234";
+        testUser.setUsername(username);
+        testUser.setPassword(password);
+
+
+        Mockito.when(userRepository.findByUsername(Mockito.eq(username))).thenReturn(testUser);
+        User foundUser = userService.isUserAuthorized(username, password);
+
+        assertEquals(foundUser.getUsername(), username);
+        assertEquals(foundUser.getPassword(), password);
+    }
+
+    @Test
+    public void isUserAuthorized_invalidPassword() {
+        User testUser = new User();
+        String username = "Admiral van Schneider";
+        String password = "MissSophie1234";
+        testUser.setUsername(username);
+        testUser.setPassword(password);
+
+
+        Mockito.when(userRepository.findByUsername(Mockito.eq(username))).thenReturn(testUser);
+
+        assertThrows(ResponseStatusException.class,
+                () -> userService.isUserAuthorized(username, "i am hacker"));
+    }
 }

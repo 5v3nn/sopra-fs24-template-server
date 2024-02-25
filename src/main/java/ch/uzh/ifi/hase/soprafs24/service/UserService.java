@@ -5,6 +5,7 @@ import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.exceptions.NotFoundException;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
+import org.apache.commons.logging.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -136,10 +137,18 @@ public class UserService {
 
     public User isUserAuthorized(String username, String password) {
         User userUsername = this.userRepository.findByUsername(username);
-        // todo find by password
 
-        // todo of if userPassword is null
-        if (userUsername == null /* || userPassword == null || userUsername.getUsername() != userPassword.getUsername() */) {
+//        if (userUsername == null) {
+//            System.out.println("Did not find user with username='" + username + "'");
+//        }
+//        else {
+//            System.out.println("Found user with username='" + userUsername.getUsername()
+//                    + "' and password='" + userUsername.getPassword()
+//                    + "', but given password='" + password + "'");
+//        }
+
+        // if no user found with username, or if found user has not password given
+        if (userUsername == null || !Objects.equals(userUsername.getPassword(), password)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Username or password are wrong");
         }
         return userUsername;
