@@ -38,7 +38,7 @@ public class UserController {
     @ResponseBody
     public List<UserGetDTO> getAllUsers(@RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = "") String authToken) {
         // if not authorized
-        if (!isAuthorized(authToken, Permissions.READ)) {
+        if (!userService.isAuthorized(authToken, Permissions.READ)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Forbidden action");
         }
 
@@ -74,7 +74,7 @@ public class UserController {
     @ResponseBody
     public UserGetDTO getUserWithId(@PathVariable Long id, @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = "") String authToken) {
         // if not authorized
-        if (!isAuthorized(authToken, Permissions.READ)) {
+        if (!userService.isAuthorized(authToken, Permissions.READ)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Forbidden action");
         }
 
@@ -109,7 +109,7 @@ public class UserController {
         }
         // or user input has a token
         else if (!Objects.equals(userInput.getToken(), "")) {
-            if (userService.isTokenInDB(userInput.getToken())) {
+            if (userService.isAuthorized(userInput.getToken(), Permissions.READ)) {
                 getUser = userService.getUserByToken(userInput.getToken());
             }
             else {
@@ -122,19 +122,5 @@ public class UserController {
 
         // return user object
         return DTOMapper.INSTANCE.convertEntityToUserGetDTO(getUser);
-    }
-
-    private boolean isAuthorized(String token, Permissions permissions) {
-        if (!Objects.equals(token, "") && permissions == Permissions.READ) {
-            return userService.isTokenInDB(token);
-        }
-        return false;
-    }
-
-    private boolean isAuthorized(String token, Permissions permissions, Long userId) {
-        if (!Objects.equals(token, "") && permissions == Permissions.READ_WRITE) {
-            return userService.isTokenCorrespondingToUserId(token, userId);
-        }
-        return false;
     }
 }

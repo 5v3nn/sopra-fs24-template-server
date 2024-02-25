@@ -1,5 +1,6 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
+import ch.uzh.ifi.hase.soprafs24.constant.Permissions;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.exceptions.NotFoundException;
@@ -115,6 +116,21 @@ public class UserService {
         catch (NotFoundException e) {
             return false;
         }
+    }
+
+    // i don't like this how this class is so exposed with so many public methods
+    public boolean isAuthorized(String token, Permissions permissions) {
+        if (!Objects.equals(token, "") && permissions == Permissions.READ) {
+            return isTokenInDB(token);
+        }
+        return false;
+    }
+
+    public boolean isAuthorized(String token, Permissions permissions, Long userId) {
+        if (!Objects.equals(token, "") && permissions == Permissions.READ_WRITE) {
+            return isTokenCorrespondingToUserId(token, userId);
+        }
+        return false;
     }
 
     public User isUserAuthorized(String username, String password) {

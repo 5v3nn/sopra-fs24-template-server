@@ -1,5 +1,6 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 
+import ch.uzh.ifi.hase.soprafs24.constant.Permissions;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.exceptions.NotFoundException;
@@ -23,6 +24,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -93,7 +95,7 @@ public class UserControllerTest {
         MockHttpServletRequestBuilder getRequest = get("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", token);
-        given(userService.isTokenInDB(Mockito.eq(token))).willReturn(true);  // valid token
+        given(userService.isAuthorized(Mockito.eq(token), Mockito.eq(Permissions.READ))).willReturn(true);  // valid token
 
         // then
         mockMvc.perform(getRequest).andExpect(status().isOk())
@@ -147,7 +149,7 @@ public class UserControllerTest {
         user.setStatus(UserStatus.ONLINE);
 
         given(userService.getUserById(Mockito.any(Long.class))).willReturn(user);
-        given(userService.isTokenInDB(Mockito.eq(token))).willReturn(true);  // valid token
+        given(userService.isAuthorized(Mockito.eq(token), Mockito.eq(Permissions.READ))).willReturn(true);  // valid token
 
 
         // when/then -> do the request + validate the result
@@ -162,7 +164,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void postUserWithId_validInput_invalid() throws Exception {
+    public void getUserWithId_validInput_invalid() throws Exception {
         Long userId = 2L;
         String token = "1";
 
