@@ -122,6 +122,7 @@ public class UserService {
 
     // i don't like this how this class is so exposed with so many public methods
     public boolean isAuthorized(String token, Permissions permissions) {
+        System.out.println("service: Check if authorized with token='" + token + "' and permissions='" + permissions.toString() + "'");
         if (!Objects.equals(token, "") && permissions == Permissions.READ) {
             return isTokenInDB(token);
         }

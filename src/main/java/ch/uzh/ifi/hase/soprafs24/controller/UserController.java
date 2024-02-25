@@ -37,6 +37,7 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
     public List<UserGetDTO> getAllUsers(@RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = "") String authToken) {
+        System.out.println("Request to /users: Token='" + authToken + "'");
         // if not authorized
         if (!userService.isAuthorized(authToken, Permissions.READ)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Forbidden action");
