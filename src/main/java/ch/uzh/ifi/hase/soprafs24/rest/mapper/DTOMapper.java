@@ -20,15 +20,18 @@ import org.mapstruct.factory.Mappers;
 @Mapper
 public interface DTOMapper {
 
-  DTOMapper INSTANCE = Mappers.getMapper(DTOMapper.class);
+    DTOMapper INSTANCE = Mappers.getMapper(DTOMapper.class);
 
-  @Mapping(source = "name", target = "name")
-  @Mapping(source = "username", target = "username")
-  User convertUserPostDTOtoEntity(UserPostDTO userPostDTO);
+    @Mapping(source = "name", target = "name", defaultValue = "")
+    @Mapping(source = "username", target = "username", defaultValue = "")
+    @Mapping(source = "token", target = "token", defaultValue = "")
+    @Mapping(source = "password", target = "password", defaultValue = "")
+    User convertUserPostDTOtoEntity(UserPostDTO userPostDTO);
 
-  @Mapping(source = "id", target = "id")
-  @Mapping(source = "name", target = "name")
-  @Mapping(source = "username", target = "username")
-  @Mapping(source = "status", target = "status")
-  UserGetDTO convertEntityToUserGetDTO(User user);
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "name", target = "name")
+    @Mapping(source = "username", target = "username")
+    @Mapping(source = "status", target = "status")
+    @Mapping(source = "token", target = "token")
+    UserGetDTO convertEntityToUserGetDTO(User user);
 }
