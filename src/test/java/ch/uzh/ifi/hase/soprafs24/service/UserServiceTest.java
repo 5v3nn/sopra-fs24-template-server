@@ -208,7 +208,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void updateUser_invalidInput_throwsException() {
+    public void updateUser_invalidInput_noUserToEdit_throwsException() {
         // did not create a user but still try to update -> check that an error is thrown
 
         // mock findById to find created user
@@ -219,6 +219,24 @@ public class UserServiceTest {
         User newUser = new User();
         newUser.setBirthday("1923-06-23");
         newUser.setName("Turing");
+        // update call
+        assertThrows(ResponseStatusException.class, () ->
+                userService.updateUser(newUser, newUser.getId(), newUser.getToken()));
+    }
+
+    @Test
+    public void updateUser_invalidInput_emptyUsername_throwsException() {
+        // did not create a user but still try to update -> check that an error is thrown
+
+        // mock findById to find created user
+        // return no user if want to call findById
+        Mockito.when(userRepository.findById(Mockito.anyLong())).thenReturn(null);
+
+        // update testUser
+        User newUser = new User();
+        newUser.setBirthday("1923-06-23");
+        newUser.setName("Turing");
+        newUser.setUsername("");
         // update call
         assertThrows(ResponseStatusException.class, () ->
                 userService.updateUser(newUser, newUser.getId(), newUser.getToken()));

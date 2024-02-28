@@ -83,6 +83,13 @@ public class UserService {
         Optional<User> foundUserOptional = userRepository.findById(id);
         User foundUser;
 
+        // check if username is empty string
+        if (Objects.equals(inputUser.getUsername(), "") || inputUser.getUsername() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Username cannot be empty");
+        }
+
+
         // checks if the optionalUser is present
         if (foundUserOptional.isPresent()) {
             foundUser = foundUserOptional.get();
