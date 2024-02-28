@@ -16,6 +16,8 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -88,6 +90,138 @@ public class UserServiceTest {
         // then -> attempt to create second user with same user -> check that an error
         // is thrown
         assertThrows(ResponseStatusException.class, () -> userService.createUser(testUser));
+    }
+
+    @Test
+    public void updateUser_validInput_success() {
+        // when -> any object is being save in the userRepository -> return the dummy
+        // testUser
+        User createdUser = userService.createUser(testUser);
+
+        // mock findById to find created user
+        Mockito.when(userRepository.findById(Mockito.eq(createdUser.getId())))
+                .thenReturn(Optional.of(createdUser));
+        Mockito.when(userRepository.findByToken(Mockito.eq(createdUser.getToken())))
+                .thenReturn(createdUser);
+        List<User> usersSameUsername = new ArrayList<>();
+        usersSameUsername.add(createdUser);
+        Mockito.when(userRepository.findAllByUsername(Mockito.eq(createdUser.getUsername())))
+                .thenReturn(usersSameUsername);
+
+        // update testUser
+        createdUser.setBirthday("1923-06-23");
+        createdUser.setName("Turing");
+        // update call
+        User updatedUser = userService.updateUser(createdUser, createdUser.getId(), createdUser.getToken());
+
+        // then
+        Mockito.verify(userRepository, Mockito.times(2)).save(Mockito.any());
+
+        assertEquals(createdUser.getId(), updatedUser.getId());
+        assertEquals(createdUser.getName(), updatedUser.getName());
+        assertEquals(createdUser.getUsername(), updatedUser.getUsername());
+        assertNotNull(updatedUser.getToken());
+        assertEquals(UserStatus.OFFLINE, updatedUser.getStatus());
+    }
+
+    @Test
+    public void updateUser_validInput_newUsername_success() {
+        // when -> any object is being save in the userRepository -> return the dummy
+        // testUser
+        User createdUser = userService.createUser(testUser);
+
+        // mock findById to find created user
+        Mockito.when(userRepository.findById(Mockito.eq(createdUser.getId())))
+                .thenReturn(Optional.of(createdUser));
+        Mockito.when(userRepository.findByToken(Mockito.eq(createdUser.getToken())))
+                .thenReturn(createdUser);
+        List<User> usersSameUsername = new ArrayList<>(); // no other users
+        Mockito.when(userRepository.findAllByUsername(Mockito.anyString()))
+                .thenReturn(usersSameUsername);
+
+        // update testUser
+        createdUser.setUsername("Turing's new username");
+        // update call
+        User updatedUser = userService.updateUser(createdUser, createdUser.getId(), createdUser.getToken());
+
+        // then
+        Mockito.verify(userRepository, Mockito.times(2)).save(Mockito.any());
+
+        assertEquals(createdUser.getId(), updatedUser.getId());
+        assertEquals(createdUser.getName(), updatedUser.getName());
+        assertEquals(createdUser.getUsername(), updatedUser.getUsername());
+        assertNotNull(updatedUser.getToken());
+        assertEquals(UserStatus.OFFLINE, updatedUser.getStatus());
+    }
+
+    @Test
+    public void updateUser_validInput_newUsername_throwsException() {
+        // when -> any object is being save in the userRepository -> return the dummy
+        String sameUsername = "fancyName";
+
+        // testUser
+        User createdUser = userService.createUser(testUser);
+
+        // mock findById to find created user
+        Mockito.when(userRepository.findById(Mockito.eq(createdUser.getId())))
+                .thenReturn(Optional.of(createdUser));
+        Mockito.when(userRepository.findByToken(Mockito.eq(createdUser.getToken())))
+                .thenReturn(createdUser);
+        List<User> usersSameUsername = new ArrayList<>(); // no other users
+        User duplacteUserUsername = new User();
+        duplacteUserUsername.setUsername(sameUsername);
+        usersSameUsername.add(duplacteUserUsername);
+        Mockito.when(userRepository.findAllByUsername(Mockito.anyString()))
+                .thenReturn(usersSameUsername);
+
+        // update testUser
+        createdUser.setUsername(sameUsername); // causes conflict
+
+        // then -> attempt to create second user with same user -> check that an error
+        // is thrown
+        assertThrows(ResponseStatusException.class, () ->
+                userService.updateUser(createdUser, createdUser.getId(), createdUser.getToken()));
+    }
+
+    @Test
+    public void updateUser_validInput_notAuthorized_throwsException() {
+        // when -> any object is being save in the userRepository -> return the dummy
+        // testUser
+        User createdUser = userService.createUser(testUser);
+
+        // mock findById to find created user
+        Mockito.when(userRepository.findById(Mockito.eq(createdUser.getId())))
+                .thenReturn(Optional.of(createdUser));
+        Mockito.when(userRepository.findByToken(Mockito.eq(createdUser.getToken())))
+                .thenReturn(createdUser);
+        List<User> usersSameUsername = new ArrayList<>();
+        usersSameUsername.add(createdUser);
+        Mockito.when(userRepository.findAllByUsername(Mockito.eq(createdUser.getUsername())))
+                .thenReturn(usersSameUsername);
+
+        // update testUser
+        createdUser.setBirthday("1923-06-23");
+        createdUser.setName("Turing");
+        // update call
+        assertThrows(ResponseStatusException.class, () ->
+                userService.updateUser(createdUser, createdUser.getId(), "invalid-token"));
+    }
+
+    @Test
+    public void updateUser_invalidInput_throwsException() {
+        // did not create a user but still try to update -> check that an error is thrown
+
+        // mock findById to find created user
+        // return no user if want to call findById
+        Mockito.when(userRepository.findById(Mockito.anyLong())).thenReturn(null);
+
+        // update testUser
+        User newUser = new User();
+        newUser.setBirthday("1923-06-23");
+        newUser.setName("Turing");
+        // update call
+        assertThrows(ResponseStatusException.class, () ->
+                userService.updateUser(newUser, newUser.getId(), newUser.getToken()));
     }
 
     @Test

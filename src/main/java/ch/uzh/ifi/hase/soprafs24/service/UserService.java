@@ -72,8 +72,62 @@ public class UserService {
     }
 
     /**
+     * Update a user. Can only change Username, Name, and Birthday.
+     *
+     * @param inputUser      user class with attributes to change
+     * @param id             id of user to change
+     * @param inputUserToken token passed in Authorized header
+     * @return changed user (should be same as inputUser)
+     */
+    public User updateUser(User inputUser, Long id, String inputUserToken) {
+        Optional<User> foundUserOptional = userRepository.findById(id);
+        User foundUser;
+
+        // checks if the optionalUser is present
+        if (foundUserOptional.isPresent()) {
+            foundUser = foundUserOptional.get();
+        }
+        else {
+            String errorString = "User with id " + id + " was not found";
+            log.debug(errorString);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, errorString);
+        }
+
+        if (!isAuthorized(inputUserToken, Permissions.READ_WRITE, id)) {
+            System.out.println("Invalid token");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized to edit this user.");
+        }
+
+        // check uniqueness criteria
+//        checkIfUserExists(foundUser);
+        List<User> usersByUsername = userRepository.findAllByUsername(inputUser.getUsername());
+        // if user with username already exists, and is a different user
+        if (!usersByUsername.isEmpty()) {
+            for (User user : usersByUsername) {
+                if (!Objects.equals(user.getId(), id)) {
+                    System.out.println("Username already used");
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Username already used.");
+                }
+            }
+        }
+
+        // update found user with new values
+        foundUser.setUsername(inputUser.getUsername());
+        foundUser.setName(inputUser.getName());
+        foundUser.setBirthday(inputUser.getBirthday());
+
+        // save to db
+        foundUser = userRepository.save(foundUser);
+        userRepository.flush();
+
+        log.debug("Updated Information for User: {}", inputUser);
+        return foundUser;
+    }
+
+    /**
      * This is a helper method that will check the uniqueness criteria of the
-     * username and the name
+     * username (and the name)
      * defined in the User entity. The method will do nothing if the input is unique
      * and throw an error otherwise.
      *
@@ -85,13 +139,11 @@ public class UserService {
         User userByUsername = userRepository.findByUsername(userToBeCreated.getUsername());
         User userByName = userRepository.findByName(userToBeCreated.getName());
 
-        String baseErrorMessage = "The %s provided %s not unique. Therefore, the user could not be created!";
-        if (userByUsername != null && userByName != null) {
+        String baseErrorMessage = "The %s provided %s not unique. " +
+                "Therefore, the user could not be created!";
+        if (userByUsername != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    String.format(baseErrorMessage, "username and the name", "are"));
-        }
-        else if (userByUsername != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format(baseErrorMessage, "username", "is"));
+                    String.format(baseErrorMessage, "username", "is"));
         }
         // i want users to have the same name
 //        else if (userByName != null) {
@@ -121,6 +173,14 @@ public class UserService {
     }
 
     // i don't like this how this class is so exposed with so many public methods
+
+    /**
+     * Check if token is in DB for READ permissions
+     *
+     * @param token       user token which has to be valid (in DB)
+     * @param permissions currently only READ permissions allowed
+     * @return true if token is in DB
+     */
     public boolean isAuthorized(String token, Permissions permissions) {
         System.out.println("service: Check if authorized with token='" + token + "' and permissions='" + permissions.toString() + "'");
         if (!Objects.equals(token, "") && permissions == Permissions.READ) {
@@ -129,6 +189,15 @@ public class UserService {
         return false;
     }
 
+
+    /**
+     * This is used to check READ_WRITE permission for a specific userId
+     *
+     * @param token       user token for the userId
+     * @param permissions Permissions (currently READ_WRITE)
+     * @param userId      user id to edit
+     * @return true if token corresponds to userId
+     */
     public boolean isAuthorized(String token, Permissions permissions, Long userId) {
         if (!Objects.equals(token, "") && permissions == Permissions.READ_WRITE) {
             return isTokenCorrespondingToUserId(token, userId);
