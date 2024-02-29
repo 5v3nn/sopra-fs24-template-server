@@ -123,4 +123,22 @@ public class UserController {
         // return user object
         return DTOMapper.INSTANCE.convertEntityToUserGetDTO(getUser);
     }
+
+    @PutMapping("/users/{id}")
+    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseBody
+    public UserGetDTO editUser(@PathVariable Long id, @RequestBody UserPostDTO userPostDTO, @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = "") String authToken) {
+
+        System.out.println("PUT /users/id with id=" + id.toString());
+
+        // convert API user to internal representation
+        User userInput = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
+
+        // update user
+        // auth token is the token of the user we want to edit
+        User updatedUser = userService.updateUser(userInput, id, authToken);
+        // convert internal representation of user back to API
+        return DTOMapper.INSTANCE.convertEntityToUserGetDTO(updatedUser);
+    }
+
 }
