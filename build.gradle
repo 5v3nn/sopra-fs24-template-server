@@ -54,11 +54,11 @@ bootJar {
 }
 
 sonarqube {
-  properties {
-    property "sonar.projectKey", "TODO"
-    property "sonar.organization", "TODO"
-    property "sonar.host.url", "TODO"
-  }
+    properties {
+        property "sonar.projectKey", "TODO"
+        property "sonar.organization", "TODO"
+        property "sonar.host.url", "TODO"
+    }
 }
 
 jacocoTestReport {
