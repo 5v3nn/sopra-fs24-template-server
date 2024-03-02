@@ -125,7 +125,7 @@ public class UserController {
     }
 
     @PutMapping("/users/{id}")
-    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ResponseBody
     public UserGetDTO editUser(@PathVariable Long id, @RequestBody UserPostDTO userPostDTO, @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = "") String authToken) {
 
@@ -140,5 +140,6 @@ public class UserController {
         // convert internal representation of user back to API
         return DTOMapper.INSTANCE.convertEntityToUserGetDTO(updatedUser);
     }
+
 
 }
