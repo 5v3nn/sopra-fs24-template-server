@@ -6,6 +6,7 @@ import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -37,6 +38,7 @@ public class DTOMapperTest {
     user.setUsername("firstname@lastname");
     user.setStatus(UserStatus.OFFLINE);
     user.setToken("1");
+    user.setCreated(LocalDateTime.now());
 
     // MAP -> Create UserGetDTO
     UserGetDTO userGetDTO = DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
@@ -46,5 +48,6 @@ public class DTOMapperTest {
     assertEquals(user.getName(), userGetDTO.getName());
     assertEquals(user.getUsername(), userGetDTO.getUsername());
     assertEquals(user.getStatus(), userGetDTO.getStatus());
+    assertEquals(user.getCreated().toString(), userGetDTO.getCreated());
   }
 }
