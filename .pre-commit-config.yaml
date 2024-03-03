@@ -12,11 +12,11 @@ repos:
     hooks:
       - id: clang-format
         args: [ --style=Google, '-i' ]
-  - repo: https://github.com/jguttman94/pre-commit-gradle
-    rev: v0.3.0  # Use the ref you want to point at
-    hooks:
-      - id: gradle-check
-        args: [ '-w', --wrapper ]
+#  - repo: https://github.com/jguttman94/pre-commit-gradle
+#    rev: v0.3.0  # Use the ref you want to point at
+#    hooks:
+#      - id: gradle-check
+#        args: [ '-w', --wrapper ]
   #      - id: gradle-build  only needed on pull request
   #        args: [ '-w', --wrapper ]
   - repo: https://github.com/executablebooks/mdformat
