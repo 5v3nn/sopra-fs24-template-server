@@ -331,7 +331,7 @@ public class UserControllerTest {
    * verifies that the request for a user with an invalid user id returns the expected error
    */
   @Test
-  public void getUserWithId_invalidInput_expectedError() throws Exception {
+  public void getUserWithId_invalidUserId_expectedError() throws Exception {
     Long invalidUserId = 2L;
     Long userId = 1L;
     String token = "1";
