@@ -1,9 +1,10 @@
-name: Test Pull Request
+name: UnitTests and Build
 
 on:
   pull_request:
     branches:
       - main
+  push:
 
   # run the workflow manually from the Actions tab
   workflow_dispatch:

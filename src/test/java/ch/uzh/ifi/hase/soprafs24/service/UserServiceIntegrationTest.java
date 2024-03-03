@@ -79,18 +79,18 @@ public class UserServiceIntegrationTest {
     assertNull(userRepository.findByUsername("testUsername"));
 
     User testUser = new User();
-    testUser.setName("testName");
+    testUser.setName("testName"); // same
     testUser.setUsername("testUsername");
-    testUser.setPassword("psw");
+    testUser.setPassword("psw"); // same
     User createdUser = userService.createUser(testUser);
 
     // attempt to create second user with same username
     User testUser2 = new User();
 
     // change the name but forget about the username
-    testUser2.setName("testName");
+    testUser2.setName("testName"); // same
     testUser2.setUsername("testUsername2");
-    testUser2.setPassword("psw");
+    testUser2.setPassword("psw"); // same
 
     // should not throw an error
     assertDoesNotThrow(() -> userService.createUser(testUser2));

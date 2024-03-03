@@ -1,7 +1,6 @@
 package ch.uzh.ifi.hase.soprafs24.repository;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
@@ -50,19 +49,14 @@ public class UserRepositoryIntegrationTest {
     assertEquals(found.getStatus(), user.getStatus());
     assertEquals(found.getPassword(), user.getPassword());
     assertEquals(found.getBirthday(), user.getBirthday());
-    assertNotNull(found.getCreated());
   }
 
+  /**
+   * validate that the created time is correctly set by comparing the time before and after the
+   * insertion of the user
+   */
   @Test
-  @Disabled("test creation date")
   public void onUserInsert_checkCreatedTime_success() {
-    // mock time
-    Instant instant = Instant.parse("1984-02-26T00:00:00Z");
-    LocalDateTime dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
-
-    Mockito.when(clock.instant()).thenReturn(instant);
-    Mockito.when(clock.getZone()).thenReturn(ZoneId.systemDefault());
-
     // given
     User user = new User();
     user.setName("Firstname Lastname");
@@ -70,6 +64,10 @@ public class UserRepositoryIntegrationTest {
     user.setStatus(UserStatus.OFFLINE);
     user.setToken("1");
     user.setPassword("psw");
+    user.setBirthday("1234");
+
+    // time before
+    LocalDateTime before = LocalDateTime.now();
 
     // insert user
     entityManager.persist(user);
@@ -78,7 +76,12 @@ public class UserRepositoryIntegrationTest {
     // when
     User found = userRepository.findByUsername(user.getUsername());
 
-    assertEquals(found.getCreated(), user.getCreated());
-    assertEquals(found.getCreated(), dateTime);
+    // time after
+    LocalDateTime after = LocalDateTime.now();
+
+    // compare found created times with the time before and after the insert
+    assertNotNull(found.getCreated());
+    assertTrue(found.getCreated().isAfter(before) || found.getCreated().isEqual(before));
+    assertTrue(found.getCreated().isBefore(after) || found.getCreated().isEqual(after));
   }
 }
