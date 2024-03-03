@@ -44,6 +44,25 @@ public class UserServiceTest {
     Mockito.when(userRepository.save(Mockito.any())).thenReturn(testUser);
   }
 
+  /**
+   * verify that the getUsers method returns the correct list of users
+   */
+  @Test
+  void getUsers_success() {
+    // given
+    List<User> expectedUsers = List.of(testUser);
+
+    // when
+    Mockito.when(userRepository.findAll()).thenReturn(expectedUsers);
+
+    // then
+    List<User> actualUsers = userService.getUsers();
+
+    assertEquals(expectedUsers, actualUsers);
+
+    Mockito.verify(userRepository, Mockito.times(1)).findAll();
+  }
+
   @Test
   public void createUser_validInputs_success() {
     // when -> any object is being save in the userRepository -> return the dummy
@@ -88,6 +107,10 @@ public class UserServiceTest {
     assertThrows(ResponseStatusException.class, () -> userService.createUser(testUser));
   }
 
+  /**
+   * verifies that the updateUser method updates the user correctly in the database and returns the
+   * updated user
+   */
   @Test
   public void updateUser_validInput_success() {
     // when -> any object is being save in the userRepository -> return the dummy
@@ -121,6 +144,10 @@ public class UserServiceTest {
     assertEquals(UserStatus.OFFLINE, updatedUser.getStatus());
   }
 
+  /**
+   * verifies that the updateUser method updates the user correctly in the database and returns the
+   * updated user. This time the focus is on the username.
+   */
   @Test
   public void updateUser_validInput_newUsername_success() {
     // when -> any object is being save in the userRepository -> return the dummy
@@ -152,6 +179,26 @@ public class UserServiceTest {
     assertEquals(UserStatus.OFFLINE, updatedUser.getStatus());
   }
 
+  /**
+   * verifies that an error is thrown in the username does not exist in the database
+   */
+  @Test
+  public void updateUser_invalidInput_usernameNotExists_throwsException() {
+    // mock findById to find no user
+    Mockito.when(userRepository.findById(Mockito.anyLong())).thenReturn(Optional.empty());
+    Mockito.when(userRepository.findByToken(Mockito.anyString())).thenReturn(null);
+
+    // update testUser
+    User createdUser = userService.createUser(testUser);
+    createdUser.setUsername("Turing's new username");
+    // update call
+    assertThrows(ResponseStatusException.class,
+        () -> userService.updateUser(createdUser, createdUser.getId(), createdUser.getToken()));
+  }
+
+  /**
+   * verifies that the updateUser method does not update the user, if the username is already taken.
+   */
   @Test
   public void updateUser_validInput_newUsername_throwsException() {
     // when -> any object is being save in the userRepository -> return the dummy
@@ -181,6 +228,10 @@ public class UserServiceTest {
         () -> userService.updateUser(createdUser, createdUser.getId(), createdUser.getToken()));
   }
 
+  /**
+   * verifies that the updateUser method does not update the user, if the auth token does not
+   * correspond to the auth token for the user which is being updated.
+   */
   @Test
   public void updateUser_validInput_notAuthorized_throwsException() {
     // when -> any object is being save in the userRepository -> return the dummy
@@ -205,10 +256,12 @@ public class UserServiceTest {
         () -> userService.updateUser(createdUser, createdUser.getId(), "invalid-token"));
   }
 
+  /**
+   * verifies that the updateUser method does not update the user, if the user does not exist. did
+   * not create a user but still try to update -> check that an error is thrown
+   */
   @Test
   public void updateUser_invalidInput_noUserToEdit_throwsException() {
-    // did not create a user but still try to update -> check that an error is thrown
-
     // mock findById to find created user
     // return no user if want to call findById
     Mockito.when(userRepository.findById(Mockito.anyLong())).thenReturn(null);
@@ -222,6 +275,10 @@ public class UserServiceTest {
         () -> userService.updateUser(newUser, newUser.getId(), newUser.getToken()));
   }
 
+  /**
+   * verifies that the updateUser method does not update the user if the given username is empty,
+   * because empty usernames are not allowed.
+   */
   @Test
   public void updateUser_invalidInput_emptyUsername_throwsException() {
     // did not create a user but still try to update -> check that an error is thrown
@@ -240,6 +297,9 @@ public class UserServiceTest {
         () -> userService.updateUser(newUser, newUser.getId(), newUser.getToken()));
   }
 
+  /**
+   * verifies that a user is successfully fetched from the database with a valid user id
+   */
   @Test
   public void getUserById_validInputs_success() {
     Long userId = 1L;
@@ -255,6 +315,9 @@ public class UserServiceTest {
     assertEquals(createdUser.getId(), getUser.getId());
   }
 
+  /**
+   * verifies that an error is thrown if an invalid user id (user does not exist) is passed
+   */
   @Test
   public void getUserById_validInputs_notFoundError() {
     // this user id does not exist
@@ -265,6 +328,9 @@ public class UserServiceTest {
     assertThrows(NotFoundException.class, () -> { userService.getUserById(userId); });
   }
 
+  /**
+   * verifies that the check if a token is in the db is correct if the token is in the db
+   */
   @Test
   public void isUserTokenInDB_success() {
     String userToken = "token";
@@ -275,6 +341,9 @@ public class UserServiceTest {
     assertTrue(userService.isTokenInDB(userToken));
   }
 
+  /**
+   * verifies that the check if a token is in the db is correct if the token is not in the db
+   */
   @Test
   public void isUserTokenInDB_failed() {
     String userToken = "token";
@@ -284,6 +353,10 @@ public class UserServiceTest {
     assertFalse(userService.isTokenInDB("invalid-token"));
   }
 
+  /**
+   * verifies that the check if a token is corresponding to a user id is correct if the token is
+   * corresponding to the user's token
+   */
   @Test
   public void isUserTokenCorrespondingToId_success() {
     String userToken = "token";
@@ -295,6 +368,10 @@ public class UserServiceTest {
     assertTrue(userService.isTokenCorrespondingToUserId(userToken, 1L));
   }
 
+  /**
+   * verifies that the check if a token is corresponding to a user id is correct if the token is
+   * /not/ corresponding to the user's token
+   */
   @Test
   public void isUserTokenCorrespondingToId_failed() {
     String userToken = "token";
@@ -304,6 +381,10 @@ public class UserServiceTest {
     assertFalse(userService.isTokenCorrespondingToUserId("invalid-token", 1L));
   }
 
+  /**
+   * verifies that the return for isAuthorized() with token and read permissions is correct (this
+   * case true) if the token is in the db and the permissions are correct
+   */
   @Test
   public void isAuthorized_readPermissions_valid_success() {
     String inputToken = "1";
@@ -315,6 +396,10 @@ public class UserServiceTest {
     assertTrue(isAuth);
   }
 
+  /**
+   * verifies that the return for isAuthorized() with token and read permissions is correct (this
+   * case false) if the token is /not/ in the db
+   */
   @Test
   public void isAuthorized_readPermissions_invalid() {
     String inputToken = "1";
@@ -325,12 +410,19 @@ public class UserServiceTest {
     assertFalse(isAuth);
   }
 
+  /**
+   * verifies that the return for isAuthorized() with token and read permissions is correct (this
+   * case false) if the token is in the db but the permissions are wrong
+   */
   @Test
   public void isAuthorized_readPermissions_invalidPermissions() {
     boolean isAuth = userService.isAuthorized("1", Permissions.READ_WRITE); // wrong permissions
     assertFalse(isAuth);
   }
 
+  /**
+   * verifies that authorization works, if username and password are valid and correct
+   */
   @Test
   public void isUserAuthorized_validUsernamePassword() {
     User testUser = new User();
@@ -346,6 +438,10 @@ public class UserServiceTest {
     assertEquals(foundUser.getPassword(), password);
   }
 
+  /**
+   * verifies that authorization does not works, if username and password are valid and /not/
+   * correct
+   */
   @Test
   public void isUserAuthorized_invalidPassword() {
     User testUser = new User();
