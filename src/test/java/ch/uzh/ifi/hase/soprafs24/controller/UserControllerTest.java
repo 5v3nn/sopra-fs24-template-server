@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +44,10 @@ public class UserControllerTest {
 
   @MockBean private UserService userService;
 
+  /**
+   * verifies that the auth request with valid username and password is successful with
+   * @throws Exception
+   */
   @Test
   public void authUser_success() throws Exception {
     String token = "1";
@@ -68,6 +74,118 @@ public class UserControllerTest {
         .andExpect(jsonPath("$.token", is(user.getToken())));
   }
 
+  /**
+   * verifies that the auth request with invalid username and password returns the expected error
+   * @throws Exception
+   */
+  @Test
+  public void authUser_usernamePassword_invalidInput_throwsException() throws Exception {
+    String invalidUsername = "invalidUsername";
+    String invalidPassword = "invalidPassword";
+
+    // given
+    String token = "1";
+    User user = new User();
+    user.setUsername("turing");
+    user.setPassword("enigma123");
+    user.setToken(token);
+
+    given(userService.isUserAuthorized(Mockito.eq(invalidUsername), Mockito.eq(invalidPassword)))
+        .willThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+
+    UserPostDTO userPostDTO = new UserPostDTO();
+    userPostDTO.setPassword(invalidPassword);
+    userPostDTO.setUsername(invalidUsername);
+
+    // when/then -> do the request + validate the result
+    MockHttpServletRequestBuilder postRequest = post("/users/auth")
+                                                    .contentType(MediaType.APPLICATION_JSON)
+                                                    .content(asJsonString(userPostDTO))
+                                                    .header("Authorization", token);
+
+    mockMvc.perform(postRequest).andExpect(status().isUnauthorized());
+  }
+
+  /**
+   * verifies that the auth request with no username,password or token returns the expected error
+   * @throws Exception
+   */
+  @Test
+  public void authUser_noInput_throwsException() throws Exception {
+    // given
+    UserPostDTO userPostDTO = new UserPostDTO();
+    userPostDTO.setPassword("");
+    userPostDTO.setUsername("");
+
+    // when/then -> do the request + validate the result
+    MockHttpServletRequestBuilder postRequest = post("/users/auth")
+                                                    .contentType(MediaType.APPLICATION_JSON)
+                                                    .content(asJsonString(userPostDTO));
+
+    mockMvc.perform(postRequest).andExpect(status().isBadRequest());
+  }
+
+  /**
+   * verifies that the auth requests with valid token is successful
+   * @throws Exception
+   */
+  @Test
+  public void authUser_validToken_success() throws Exception {
+    String token = "1";
+
+    // given
+    User user = new User();
+    user.setUsername("testUsername");
+    user.setToken(token);
+
+    given(userService.isAuthorized(Mockito.anyString(), Mockito.eq(Permissions.READ)))
+        .willReturn(true);
+    given(userService.getUserByToken(Mockito.anyString())).willReturn(user);
+
+    UserPostDTO userPostDTO = new UserPostDTO();
+    userPostDTO.setToken(token);
+
+    // when/then -> do the request + validate the result
+    MockHttpServletRequestBuilder postRequest = post("/users/auth")
+                                                    .contentType(MediaType.APPLICATION_JSON)
+                                                    .content(asJsonString(userPostDTO))
+                                                    .header("Authorization", token);
+
+    mockMvc.perform(postRequest)
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.token", is(user.getToken())));
+  }
+
+  /**
+   * verifies that the auth request with an invalid token returns the expected error
+   * @throws Exception
+   */
+  @Test
+  public void authUser_invalidToken_throwsException() throws Exception {
+    String invalidToken = "2";
+    String token = "1";
+
+    // given
+    User user = new User();
+    user.setUsername("testUsername");
+    user.setToken(token);
+
+    given(userService.isAuthorized(Mockito.eq(invalidToken), Mockito.eq(Permissions.READ)))
+        .willReturn(false);
+    // given(userService.getUserByToken(Mockito.anyString())).willReturn(user);
+
+    UserPostDTO userPostDTO = new UserPostDTO();
+    userPostDTO.setToken(invalidToken); // invalid token
+
+    // when/then -> do the request + validate the result
+    MockHttpServletRequestBuilder postRequest = post("/users/auth")
+                                                    .contentType(MediaType.APPLICATION_JSON)
+                                                    .content(asJsonString(userPostDTO))
+                                                    .header("Authorization", token);
+
+    mockMvc.perform(postRequest).andExpect(status().isForbidden());
+  }
+
   @Test
   public void givenUsers_whenGetUsers_thenReturnJsonArray() throws Exception {
     String token = "1";
@@ -88,7 +206,8 @@ public class UserControllerTest {
     // when
     MockHttpServletRequestBuilder getRequest =
         get("/users").contentType(MediaType.APPLICATION_JSON).header("Authorization", token);
-    given(userService.isAuthorized(Mockito.eq(token), Mockito.eq(Permissions.READ)))
+    given(userService.isAuthorized(Mockito.eq(token),
+              Mockito.eq(Permissions.READ)))
         .willReturn(true); // valid token
 
     // then
@@ -98,6 +217,22 @@ public class UserControllerTest {
         .andExpect(jsonPath("$[0].name", is(user.getName())))
         .andExpect(jsonPath("$[0].username", is(user.getUsername())))
         .andExpect(jsonPath("$[0].status", is(user.getStatus().toString())));
+  }
+
+  /**
+   * verifies that when getting all users with an invalid token, the expected error is thrown
+   */
+  @Test
+  public void givenUsers_whenGetUsers_invalidToken_expectedException() throws Exception {
+    String invalidToken = "2";
+
+    given(userService.isAuthorized(Mockito.anyString(), Mockito.any(Permissions.class)))
+        .willReturn(false);
+
+    MockHttpServletRequestBuilder getRequest =
+        get("/users").contentType(MediaType.APPLICATION_JSON).header("Authorization", invalidToken);
+
+    mockMvc.perform(getRequest).andExpect(status().isForbidden());
   }
 
   @Test
@@ -129,6 +264,11 @@ public class UserControllerTest {
         .andExpect(jsonPath("$.status", is(user.getStatus().toString())));
   }
 
+  /**
+   * verifies that the get request with valid user id is successful and returns the correct user
+   * properties
+   * @throws Exception
+   */
   @Test
   public void getUserWithId_validInput_valid() throws Exception {
     Long userId = 1L;
@@ -143,7 +283,8 @@ public class UserControllerTest {
     user.setStatus(UserStatus.ONLINE);
 
     given(userService.getUserById(Mockito.any(Long.class))).willReturn(user);
-    given(userService.isAuthorized(Mockito.eq(token), Mockito.eq(Permissions.READ)))
+    given(userService.isAuthorized(Mockito.eq(token),
+              Mockito.eq(Permissions.READ)))
         .willReturn(true); // valid token
 
     // when/then -> do the request + validate the result
@@ -158,8 +299,12 @@ public class UserControllerTest {
         .andExpect(jsonPath("$.status", is(user.getStatus().toString())));
   }
 
+  /**
+   * verifies that the request for a user an invalid token returns the expected error
+   * @throws Exception
+   */
   @Test
-  public void getUserWithId_validInput_invalid() throws Exception {
+  public void getUserWithId_invalidToken_expectedError() throws Exception {
     Long userId = 2L;
     String token = "1";
 
@@ -183,9 +328,102 @@ public class UserControllerTest {
   }
 
   /**
+   * verifies that the request for a user with an invalid user id returns the expected error
+   */
+  @Test
+  public void getUserWithId_invalidInput_expectedError() throws Exception {
+    Long invalidUserId = 2L;
+    Long userId = 1L;
+    String token = "1";
+
+    // given
+    User user = new User();
+    user.setId(userId);
+    user.setName("Test User");
+    user.setUsername("testUsername");
+    user.setToken(token);
+    user.setStatus(UserStatus.ONLINE);
+
+    given(userService.getUserById(Mockito.any(Long.class)))
+        .willThrow(new NotFoundException("not found"));
+    given(userService.isAuthorized(Mockito.eq(token),
+              Mockito.eq(Permissions.READ)))
+        .willReturn(true); // valid token
+
+    // when/then -> do the request + validate the result
+    MockHttpServletRequestBuilder getRequest =
+        get("/users/" + invalidUserId.toString()).header("Authorization", token);
+
+    mockMvc.perform(getRequest).andExpect(status().isNotFound());
+  }
+
+  /**
+   * verifies that the put requests for a valid user works and correctly updates the user
+   */
+  @Test
+  public void editUser_validInput_valid() throws Exception {
+    Long userId = 1L;
+    String token = "1";
+
+    // given
+    User user = new User();
+    user.setId(userId);
+    user.setName("turing");
+    user.setUsername("enigma123");
+    user.setToken(token);
+    user.setStatus(UserStatus.ONLINE);
+
+    UserPostDTO userPostDTO = new UserPostDTO();
+    userPostDTO.setName(user.getName());
+    userPostDTO.setUsername(user.getUsername());
+
+    given(userService.updateUser(Mockito.eq(user), Mockito.eq(userId), Mockito.eq(token)))
+        .willReturn(user);
+
+    // when/then -> do the request + validate the result
+    MockHttpServletRequestBuilder putRequest = put("/users/" + userId.toString())
+                                                   .contentType(MediaType.APPLICATION_JSON)
+                                                   .content(asJsonString(user))
+                                                   .header("Authorization", token);
+
+    mockMvc.perform(putRequest).andExpect(status().isNoContent());
+  }
+
+  /**
+   * verifies that the put request for an invalid user id returns the expected error
+   */
+  @Test
+  public void editUser_invalidInput_invalid() throws Exception {
+    Long invalidUserId = 2L;
+    Long userId = 1L;
+    String token = "1";
+
+    // given
+    User user = new User();
+    user.setId(userId);
+    user.setName("turing");
+    user.setUsername("enigma123");
+    user.setToken(token);
+    user.setStatus(UserStatus.ONLINE);
+
+    given(userService.updateUser(
+              Mockito.any(User.class), Mockito.eq(invalidUserId), Mockito.anyString()))
+        .willThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+    // when/then -> do the request + validate the result
+    MockHttpServletRequestBuilder putRequest = put("/users/" + invalidUserId.toString())
+                                                   .contentType(MediaType.APPLICATION_JSON)
+                                                   .content(asJsonString(user))
+                                                   .header("Authorization", token);
+
+    mockMvc.perform(putRequest).andExpect(status().isNotFound());
+  }
+
+  /**
    * Helper Method to convert userPostDTO into a JSON string such that the input
    * can be processed
-   * Input will look like this: {"name": "Test User", "username": "testUsername"}
+   * Input will look like this: {"name": "Test User", "username":
+   * "testUsername"}
    *
    * @param object
    * @return string
