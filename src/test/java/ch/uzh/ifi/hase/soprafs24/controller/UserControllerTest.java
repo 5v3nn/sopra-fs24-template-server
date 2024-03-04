@@ -377,7 +377,8 @@ public class UserControllerTest {
     userPostDTO.setName(user.getName());
     userPostDTO.setUsername(user.getUsername());
 
-    given(userService.updateUser(Mockito.eq(user), Mockito.eq(userId), Mockito.eq(token)))
+    // when user is updated (input is this user) then service returns the updated user
+    given(userService.updateUser(Mockito.any(User.class), Mockito.eq(userId), Mockito.eq(token)))
         .willReturn(user);
 
     // when/then -> do the request + validate the result
@@ -386,7 +387,11 @@ public class UserControllerTest {
                                                    .content(asJsonString(user))
                                                    .header("Authorization", token);
 
-    mockMvc.perform(putRequest).andExpect(status().isNoContent());
+    mockMvc.perform(putRequest)
+        .andExpect(status().isNoContent())
+        .andExpect(jsonPath("$.name", is(user.getName())))
+        .andExpect(jsonPath("$.username", is(user.getUsername())))
+        .andExpect(jsonPath("$.status", is(user.getStatus().toString())));
   }
 
   /**
