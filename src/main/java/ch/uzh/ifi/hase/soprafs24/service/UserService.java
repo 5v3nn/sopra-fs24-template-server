@@ -116,6 +116,7 @@ public class UserService {
     foundUser.setUsername(inputUser.getUsername());
     foundUser.setName(inputUser.getName());
     foundUser.setBirthday(inputUser.getBirthday());
+    foundUser.setStatus(inputUser.getStatus());
 
     // save to db
     foundUser = userRepository.save(foundUser);
