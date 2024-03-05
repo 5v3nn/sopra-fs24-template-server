@@ -137,4 +137,27 @@ public class UserController {
     // convert internal representation of user back to API
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(updatedUser);
   }
+
+  @PatchMapping("/users/{id}/status")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @ResponseBody
+  public UserGetDTO editUserStatus(@PathVariable Long id, @RequestBody UserPostDTO userPostDTO,
+      @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = "") String authToken) {
+    System.out.println("PATCH /users/id/status with id=" + id.toString());
+
+    // convert API user to internal representation, but only interested in status anyway
+    User userInput = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
+
+    // bad request if status not provided (we have to do the check on userPostDTO, because the
+    // default mapping value would be "OFFLINE")
+    if (userPostDTO.getStatus() == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status not provided");
+    }
+
+    // update user
+    // auth token is the token of the user we want to edit
+    User updatedUser = userService.updateUserStatus(userInput, id, authToken);
+    // convert internal representation of user back to API
+    return DTOMapper.INSTANCE.convertEntityToUserGetDTO(updatedUser);
+  }
 }

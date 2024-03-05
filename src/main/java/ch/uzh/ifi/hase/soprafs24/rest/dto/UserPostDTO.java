@@ -1,5 +1,7 @@
 package ch.uzh.ifi.hase.soprafs24.rest.dto;
 
+import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
+
 public class UserPostDTO {
   private String name;
 
@@ -10,6 +12,8 @@ public class UserPostDTO {
   private String token;
 
   private String birthday;
+
+  private UserStatus status;
 
   public String getName() {
     return name;
@@ -49,5 +53,13 @@ public class UserPostDTO {
 
   public void setBirthday(String birthday) {
     this.birthday = birthday;
+  }
+
+  public UserStatus getStatus() {
+    return status;
+  }
+
+  public void setStatus(UserStatus status) {
+    this.status = status;
   }
 }

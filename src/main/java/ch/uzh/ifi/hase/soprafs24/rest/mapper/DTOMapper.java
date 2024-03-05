@@ -23,6 +23,7 @@ public interface DTOMapper {
 
   @Mapping(source = "name", target = "name", defaultValue = "")
   @Mapping(source = "username", target = "username", defaultValue = "")
+  @Mapping(source = "status", target = "status", defaultValue = "OFFLINE")
   @Mapping(source = "token", target = "token", defaultValue = "")
   @Mapping(source = "password", target = "password", defaultValue = "")
   @Mapping(source = "birthday", target = "birthday")

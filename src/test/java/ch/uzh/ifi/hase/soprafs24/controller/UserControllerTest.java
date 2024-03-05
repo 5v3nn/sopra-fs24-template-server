@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -377,7 +378,8 @@ public class UserControllerTest {
     userPostDTO.setName(user.getName());
     userPostDTO.setUsername(user.getUsername());
 
-    given(userService.updateUser(Mockito.eq(user), Mockito.eq(userId), Mockito.eq(token)))
+    // when user is updated (input is this user) then service returns the updated user
+    given(userService.updateUser(Mockito.any(User.class), Mockito.eq(userId), Mockito.eq(token)))
         .willReturn(user);
 
     // when/then -> do the request + validate the result
@@ -386,7 +388,11 @@ public class UserControllerTest {
                                                    .content(asJsonString(user))
                                                    .header("Authorization", token);
 
-    mockMvc.perform(putRequest).andExpect(status().isNoContent());
+    mockMvc.perform(putRequest)
+        .andExpect(status().isNoContent())
+        .andExpect(jsonPath("$.name", is(user.getName())))
+        .andExpect(jsonPath("$.username", is(user.getUsername())))
+        .andExpect(jsonPath("$.status", is(user.getStatus().toString())));
   }
 
   /**
@@ -417,6 +423,66 @@ public class UserControllerTest {
                                                    .header("Authorization", token);
 
     mockMvc.perform(putRequest).andExpect(status().isNotFound());
+  }
+
+  /**
+   * verifies that the patch request for updating the user status is successful
+   */
+  @Test
+  public void patchUserStatus_validInput_valid() throws Exception {
+    Long userId = 1L;
+    String token = "1";
+
+    // given user which is returned when updated (so assume current user is offline and we want to
+    // switch online)
+    User user = new User();
+    user.setId(userId);
+    user.setName("turing");
+    user.setUsername("enigma123");
+    user.setToken(token);
+    user.setStatus(UserStatus.ONLINE);
+
+    // switch online
+    UserPostDTO userPostDTO = new UserPostDTO();
+    userPostDTO.setStatus(UserStatus.ONLINE);
+
+    // when user is updated (input is this user) then service returns the updated user
+    given(userService.updateUserStatus(
+              Mockito.any(User.class), Mockito.eq(userId), Mockito.eq(token)))
+        .willReturn(user);
+
+    // when/then -> do the request + validate the result
+    MockHttpServletRequestBuilder patchRequest = patch("/users/" + userId.toString() + "/status")
+                                                     .contentType(MediaType.APPLICATION_JSON)
+                                                     .content(asJsonString(userPostDTO))
+                                                     .header("Authorization", token);
+
+    mockMvc.perform(patchRequest)
+        .andExpect(status().isNoContent())
+        .andExpect(jsonPath("$.name", is(user.getName())))
+        .andExpect(jsonPath("$.username", is(user.getUsername())))
+        .andExpect(jsonPath("$.status", is(user.getStatus().toString())));
+  }
+
+  /**
+   * verifies that an exception is thrown when the user status is empty
+   */
+  @Test
+  public void patchUserStatus_emptyStatus_throwsException() throws Exception {
+    Long userId = 1L;
+    String token = "1";
+
+    // status is null
+    UserPostDTO userPostDTO = new UserPostDTO();
+    userPostDTO.setStatus(null);
+
+    // when/then -> do the request + validate the result
+    MockHttpServletRequestBuilder patchRequest = patch("/users/" + userId.toString() + "/status")
+                                                     .contentType(MediaType.APPLICATION_JSON)
+                                                     .content(asJsonString(userPostDTO))
+                                                     .header("Authorization", token);
+
+    mockMvc.perform(patchRequest).andExpect(status().isBadRequest());
   }
 
   /**
