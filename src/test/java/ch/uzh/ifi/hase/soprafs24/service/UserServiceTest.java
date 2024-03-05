@@ -298,6 +298,60 @@ public class UserServiceTest {
   }
 
   /**
+   * verifies that the user status is correctly updated if the auth token is correct
+   */
+  @Test
+  public void updateUserStatus_validInput_success() {
+    // when -> any object is being save in the userRepository -> return the dummy
+    // testUser
+    testUser.setStatus(UserStatus.OFFLINE);
+    User createdUser = userService.createUser(testUser);
+
+    // mock findById to find created user
+    Mockito.when(userRepository.findById(Mockito.eq(createdUser.getId())))
+        .thenReturn(Optional.of(createdUser));
+    Mockito.when(userRepository.findByToken(Mockito.eq(createdUser.getToken())))
+        .thenReturn(createdUser);
+
+    // update testUser
+    createdUser.setStatus(UserStatus.ONLINE);
+    // update call
+    User updatedUser =
+        userService.updateUserStatus(createdUser, createdUser.getId(), createdUser.getToken());
+
+    // then
+    Mockito.verify(userRepository, Mockito.times(2)).save(Mockito.any());
+
+    // expected status is ONLINE
+    assertEquals(UserStatus.ONLINE, updatedUser.getStatus());
+    assertEquals(createdUser.getId(), updatedUser.getId());
+    assertEquals(createdUser.getUsername(), updatedUser.getUsername());
+  }
+
+  /**
+   * verifies that the user status is not updated if the auth token is incorrect
+   */
+  @Test
+  public void updateUserStatus_invalidInput_notAuthorized_throwsException() {
+    // when -> any object is being save in the userRepository -> return the dummy
+    // testUser
+    testUser.setStatus(UserStatus.OFFLINE);
+    User createdUser = userService.createUser(testUser);
+
+    // mock findById to find created user
+    Mockito.when(userRepository.findById(Mockito.eq(createdUser.getId())))
+        .thenReturn(Optional.of(createdUser));
+    Mockito.when(userRepository.findByToken(Mockito.eq(createdUser.getToken())))
+        .thenReturn(createdUser);
+
+    // update testUser
+    createdUser.setStatus(UserStatus.ONLINE);
+    // update call
+    assertThrows(ResponseStatusException.class,
+        () -> userService.updateUserStatus(createdUser, createdUser.getId(), "invalid-token"));
+  }
+
+  /**
    * verifies that a user is successfully fetched from the database with a valid user id
    */
   @Test

@@ -141,6 +141,24 @@ public class UserService {
   }
 
   /**
+   * update the status of the user
+   */
+  public User updateUserStatus(User inputUser, Long id, String inputUserToken) {
+    User foundUser = prepareUpdateUser(id, inputUserToken);
+
+    // update found user with new values
+    foundUser.setStatus(inputUser.getStatus());
+
+    // save to db
+    foundUser = userRepository.save(foundUser);
+    userRepository.flush();
+
+    log.debug("Updated Information for User: {}", foundUser);
+    System.out.println("Updated Information for User: " + foundUser);
+    return foundUser;
+  }
+
+  /**
    * This is a helper method that will check the uniqueness criteria of the
    * username (and the name)
    * defined in the User entity. The method will do nothing if the input is unique
