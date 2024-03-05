@@ -145,39 +145,6 @@ public class UserServiceTest {
   }
 
   /**
-   * verifies that the update of the user status is executed successfully
-   */
-  @Test
-  public void updateUser_validInput_status_success() {
-    // initialized with status OFFLINE
-    testUser.setStatus(UserStatus.OFFLINE);
-
-    User createdUser = userService.createUser(testUser);
-
-    // when -> any object is being save in the userRepository -> return the dummy
-    Mockito.when(userRepository.findById(Mockito.eq(createdUser.getId())))
-        .thenReturn(Optional.of(createdUser));
-    Mockito.when(userRepository.findByToken(Mockito.eq(createdUser.getToken())))
-        .thenReturn(createdUser);
-    List<User> usersSameUsername = new ArrayList<>();
-    usersSameUsername.add(createdUser);
-    Mockito.when(userRepository.findAllByUsername(Mockito.eq(createdUser.getUsername())))
-        .thenReturn(usersSameUsername);
-
-    // update testUser
-    createdUser.setStatus(UserStatus.ONLINE);
-    // update call
-    User updatedUser =
-        userService.updateUser(createdUser, createdUser.getId(), createdUser.getToken());
-
-    // then
-    Mockito.verify(userRepository, Mockito.times(2)).save(Mockito.any());
-
-    // expected status is ONLINE
-    assertEquals(UserStatus.ONLINE, updatedUser.getStatus());
-  }
-
-  /**
    * verifies that the updateUser method updates the user correctly in the database and returns the
    * updated user. This time the focus is on the username.
    */

@@ -69,21 +69,16 @@ public class UserService {
   }
 
   /**
-   * Update a user. Can only change Username, Name, and Birthday.
-   *
-   * @param inputUser      user class with attributes to change
-   * @param id             id of user to change
-   * @param inputUserToken token passed in Authorized header
-   * @return changed user (should be same as inputUser)
+   * Helper function to get the user by the id and check if the auth token is the matching token.
+   * This is needed for updating users. Because this is private, it cannot be tested...
+   * @param id id of the endpoint user
+   * @param inputUserToken token from the auth request, which should match with the token of the
+   *     users to be updated
+   * @return the user to be updated
    */
-  public User updateUser(User inputUser, Long id, String inputUserToken) {
+  private User prepareUpdateUser(Long id, String inputUserToken) {
     Optional<User> foundUserOptional = userRepository.findById(id);
     User foundUser;
-
-    // check if username is empty string
-    if (Objects.equals(inputUser.getUsername(), "") || inputUser.getUsername() == null) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username cannot be empty");
-    }
 
     // checks if the optionalUser is present
     if (foundUserOptional.isPresent()) {
@@ -98,6 +93,25 @@ public class UserService {
       System.out.println("Invalid token");
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized to edit this user.");
     }
+
+    return foundUser;
+  }
+
+  /**
+   * Update a user. Can only change Username, Name, and Birthday.
+   *
+   * @param inputUser      user class with attributes to change
+   * @param id             id of user to change
+   * @param inputUserToken token passed in Authorized header
+   * @return changed user (should be same as inputUser)
+   */
+  public User updateUser(User inputUser, Long id, String inputUserToken) {
+    // check if username is empty string
+    if (Objects.equals(inputUser.getUsername(), "") || inputUser.getUsername() == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username cannot be empty");
+    }
+
+    User foundUser = prepareUpdateUser(id, inputUserToken);
 
     // check uniqueness criteria
     //        checkIfUserExists(foundUser);
