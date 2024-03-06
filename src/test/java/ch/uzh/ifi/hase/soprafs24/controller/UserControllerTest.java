@@ -8,8 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import ch.uzh.ifi.hase.soprafs24.constant.Permissions;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
@@ -72,7 +71,9 @@ public class UserControllerTest {
 
     mockMvc.perform(postRequest)
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.token", is(user.getToken())));
+        .andExpect(jsonPath("$.token", is(user.getToken())))
+        .andExpect(header().string("Content-Type", "application/json"));
+    ;
   }
 
   /**
@@ -154,7 +155,9 @@ public class UserControllerTest {
 
     mockMvc.perform(postRequest)
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.token", is(user.getToken())));
+        .andExpect(jsonPath("$.token", is(user.getToken())))
+        .andExpect(header().string("Content-Type", "application/json"));
+    ;
   }
 
   /**
@@ -217,7 +220,9 @@ public class UserControllerTest {
         .andExpect(jsonPath("$", hasSize(1)))
         .andExpect(jsonPath("$[0].name", is(user.getName())))
         .andExpect(jsonPath("$[0].username", is(user.getUsername())))
-        .andExpect(jsonPath("$[0].status", is(user.getStatus().toString())));
+        .andExpect(jsonPath("$[0].status", is(user.getStatus().toString())))
+        .andExpect(header().string("Content-Type", "application/json"));
+    ;
   }
 
   /**
@@ -262,7 +267,9 @@ public class UserControllerTest {
         .andExpect(jsonPath("$.id", is(user.getId().intValue())))
         .andExpect(jsonPath("$.name", is(user.getName())))
         .andExpect(jsonPath("$.username", is(user.getUsername())))
-        .andExpect(jsonPath("$.status", is(user.getStatus().toString())));
+        .andExpect(jsonPath("$.status", is(user.getStatus().toString())))
+        .andExpect(header().string("Content-Type", "application/json"));
+    ;
   }
 
   /**
@@ -297,7 +304,9 @@ public class UserControllerTest {
         .andExpect(jsonPath("$.id", is(user.getId().intValue())))
         .andExpect(jsonPath("$.name", is(user.getName())))
         .andExpect(jsonPath("$.username", is(user.getUsername())))
-        .andExpect(jsonPath("$.status", is(user.getStatus().toString())));
+        .andExpect(jsonPath("$.status", is(user.getStatus().toString())))
+        .andExpect(header().string("Content-Type", "application/json"));
+    ;
   }
 
   /**
@@ -392,7 +401,9 @@ public class UserControllerTest {
         .andExpect(status().isNoContent())
         .andExpect(jsonPath("$.name", is(user.getName())))
         .andExpect(jsonPath("$.username", is(user.getUsername())))
-        .andExpect(jsonPath("$.status", is(user.getStatus().toString())));
+        .andExpect(jsonPath("$.status", is(user.getStatus().toString())))
+        .andExpect(header().string("Content-Type", "application/json"));
+    ;
   }
 
   /**
@@ -457,11 +468,13 @@ public class UserControllerTest {
                                                      .content(asJsonString(userPostDTO))
                                                      .header("Authorization", token);
 
+    // test the response content and headers:
     mockMvc.perform(patchRequest)
         .andExpect(status().isNoContent())
         .andExpect(jsonPath("$.name", is(user.getName())))
         .andExpect(jsonPath("$.username", is(user.getUsername())))
-        .andExpect(jsonPath("$.status", is(user.getStatus().toString())));
+        .andExpect(jsonPath("$.status", is(user.getStatus().toString())))
+        .andExpect(header().string("Content-Type", "application/json"));
   }
 
   /**
